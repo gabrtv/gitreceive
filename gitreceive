@@ -63,9 +63,13 @@ EOF
     if [[ $SSH_ORIGINAL_COMMAND == git-receive-pack* ]]; then
       cd $RECEIVE_REPO && mkdir -p build
       tmpdir=$(mktemp --tmpdir=build -d)
+      image=$RECEIVE_USER/${RECEIVE_REPO%.git}
+      target=$REGISTRY_HOST:${REGISTRY_PORT:-5000}/$image
       git archive master | tar --extract -C $tmpdir
       set +e
-      sudo docker build -t $RECEIVE_USER/${RECEIVE_REPO%.git} $tmpdir >&2
+      sudo docker build -t $image $tmpdir >&2
+      sudo docker tag $image $target >&2
+      sudo docker push $target >&2
       rm -rf $tempdir
       set -e
     fi
