@@ -61,8 +61,13 @@ EOF
     git-shell -c "$SSH_ORIGINAL_COMMAND"
     # if we're processing a receive-pack, run a build
     if [[ $SSH_ORIGINAL_COMMAND == git-receive-pack* ]]; then
-      cd $RECEIVE_REPO
-      git archive master | git archive master | tar --extract --to-stdout Dockerfile | sudo docker build -t $RECEIVE_USER/${RECEIVE_REPO%.git} - >&2
+      cd $RECEIVE_REPO && mkdir -p build
+      tmpdir=$(mktemp --tmpdir=build -d)
+      git archive master | tar --extract -C $tmpdir
+      set +e
+      sudo docker build -t $RECEIVE_USER/${RECEIVE_REPO%.git} $tmpdir >&2
+      rm -rf $tempdir
+      set -e
     fi
     ;;
 
